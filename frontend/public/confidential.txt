@@ -1,0 +1,19 @@
+Employee ID: E1001 | Name: John Smith | Department: Sales | Position: Sales Manager | Salary: $75,000 | Join Date: 12/05/2018 | Email: john.smith@example.com | Phone: (555) 123-4567
+
+Employee ID: E1002 | Name: Emily Johnson | Department: Marketing | Position: Marketing Specialist | Salary: $60,000 | Join Date: 03/15/2020 | Email: emily.j@example.com | Phone: (555) 234-5678
+
+Employee ID: E1003 | Name: Michael Brown | Department: IT | Position: Software Developer | Salary: $85,000 | Join Date: 07/22/2019 | Email: michael.b@example.com | Phone: (555) 345-6789
+
+Employee ID: E1004 | Name: Sarah Davis | Department: HR | Position: HR Manager | Salary: $70,000 | Join Date: 01/10/2021 | Email: sarah.d@example.com | Phone: (555) 456-7890
+
+Employee ID: E1005 | Name: David Wilson | Department: Finance | Position: Accountant | Salary: $65,000 | Join Date: 09/30/2017 | Email: david.w@example.com | Phone: (555) 567-8901
+
+Employee ID: E1006 | Name: Jessica Martinez | Department: Operations | Position: Operations Coordinator | Salary: $55,000 | Join Date: 11/14/2022 | Email: jessica.m@example.com | Phone: (555) 678-9012
+
+Employee ID: E1007 | Name: Robert Taylor | Department: IT | Position: System Administrator | Salary: $80,000 | Join Date: 05/06/2020 | Email: robert.t@example.com | Phone: (555) 789-0123
+
+Employee ID: E1008 | Name: Lisa Anderson | Department: Customer Support | Position: Support Lead | Salary: $58,000 | Join Date: 08/19/2021 | Email: lisa.a@example.com | Phone: (555) 890-1234
+
+Employee ID: E1009 | Name: James White | Department: Sales | Position: Sales Representative | Salary: $50,000 | Join Date: 04/25/2023 | Email: james.w@example.com | Phone: (555) 901-2345
+
+Employee ID: E1010 | Name: Olivia Lee | Department: Finance | Position: Financial Analyst | Salary: $72,000 | Join Date: 02/08/2019 | Email: olivia.l@example.com | Phone: (555) 012-3456
