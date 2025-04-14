@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import Image from 'next/image';
+import Link from 'next/link';
 import './index.css'; // Import your index CSS file
 export default function Home() {
   const router = useRouter();

@@ -1,18 +1,53 @@
+// const express = require("express");
+// const router = express.Router();
+// const multer = require("multer");
+// const path = require("path");
+
+// const {
+//   registerUser,
+//   loginUser,
+//   voiceAuthenticate
+// } = require("../controllers/authController");
+
+// // Multer storage configuration for saving audio files in uploads/
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, path.join(__dirname, "../uploads/")); // Ensures it points to /backend/uploads
+//   },
+//   filename: (req, file, cb) => {
+//     const uniqueName = `${Date.now()}-${file.originalname}`;
+//     cb(null, uniqueName);
+//   }
+// });
+
+// const upload = multer({ storage });
+
+// // 👤 Register user with voice sample
+// router.post("/register", upload.single("audio"), registerUser);
+
+// // 🔐 Text-based login (if used)
+// router.post("/login", loginUser);
+
+// // 🎙️ Voice-based authentication
+// router.post("/voice-auth", upload.single("audio"), voiceAuthenticate);
+
+// module.exports = router;
+
+
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-
 const {
   registerUser,
   loginUser,
   voiceAuthenticate
 } = require("../controllers/authController");
 
-// Multer storage configuration for saving audio files in uploads/
+// Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads/")); // Ensures it points to /backend/uploads
+    cb(null, path.join(__dirname, "../uploads/"));
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
@@ -20,15 +55,23 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Limit to 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'audio/wav' || file.mimetype === 'audio/mpeg') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only WAV/MP3 audio files are allowed'), false);
+    }
+  }
+});
 
-// 👤 Register user with voice sample
+// Routes
 router.post("/register", upload.single("audio"), registerUser);
-
-// 🔐 Text-based login (if used)
 router.post("/login", loginUser);
-
-// 🎙️ Voice-based authentication
 router.post("/voice-auth", upload.single("audio"), voiceAuthenticate);
 
 module.exports = router;
