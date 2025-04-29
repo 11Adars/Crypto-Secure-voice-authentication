@@ -4,7 +4,7 @@ from datetime import datetime
 
 THREAT_LOG = "threats.txt"
 
-def detect_threat(log_file="access_logs.txt", threshold=10):
+def detect_threat(log_file="alerts.log", threshold=10):
     with open(log_file, "r") as f:
         logs = f.readlines()
 

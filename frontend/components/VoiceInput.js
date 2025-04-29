@@ -6,39 +6,37 @@ export default function VoiceInput({ onSuccess }) {
   const [username, setUsername] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
   const [status, setStatus] = useState("ready");
+
   const animationRef = useRef();
   const audioContextRef = useRef();
   const analyserRef = useRef();
   const microphoneRef = useRef();
+  const chunks = useRef([]);
+  const recordStartTime = useRef(null);
 
   const visualizeAudio = (stream) => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
-      analyserRef.current.fftSize = 32;
-    }
+    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    analyserRef.current = audioContextRef.current.createAnalyser();
+    const source = audioContextRef.current.createMediaStreamSource(stream);
+    source.connect(analyserRef.current);
+    analyserRef.current.fftSize = 32;
 
     const bufferLength = analyserRef.current.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    const updateVisualization = () => {
+    const update = () => {
       analyserRef.current.getByteFrequencyData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        sum += dataArray[i];
-      }
-      const average = sum / bufferLength;
-      setAudioLevel(Math.min(average / 2.55, 100)); // Convert to percentage
-      animationRef.current = requestAnimationFrame(updateVisualization);
+      const avg = dataArray.reduce((sum, val) => sum + val, 0) / bufferLength;
+      setAudioLevel(Math.min(avg / 2.55, 100));
+      animationRef.current = requestAnimationFrame(update);
     };
 
-    animationRef.current = requestAnimationFrame(updateVisualization);
+    update();
   };
 
   const startRecording = async () => {
-    if (!username) {
+    const cleanUsername = username.trim().toLowerCase();
+    if (!cleanUsername) {
       setStatus("username-required");
       setTimeout(() => setStatus("ready"), 2000);
       return;
@@ -49,23 +47,29 @@ export default function VoiceInput({ onSuccess }) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       microphoneRef.current = stream;
       visualizeAudio(stream);
-      
-      const recorder = new MediaRecorder(stream);
-      const chunks = [];
 
-      recorder.ondataavailable = (e) => chunks.push(e.data);
+      const recorder = new MediaRecorder(stream);
+      chunks.current = [];
+
+      recorder.ondataavailable = (e) => chunks.current.push(e.data);
       recorder.onstop = async () => {
         cancelAnimationFrame(animationRef.current);
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
+        audioContextRef.current?.close();
+        microphoneRef.current?.getTracks().forEach(track => track.stop());
+
+        const audioBlob = new Blob(chunks.current, { type: "audio/wav" });
+        const durationSec = (Date.now() - recordStartTime.current) / 1000;
+
+        if (durationSec < 3) {
+          setStatus("too-short");
+          setTimeout(() => setStatus("ready"), 2000);
+          return;
         }
-        
+
         setStatus("processing");
-        const blob = new Blob(chunks, { type: "audio/wav" });
         const formData = new FormData();
-        formData.append("username", username);
-        formData.append("audio", blob, "voice.wav");
+        formData.append("username", cleanUsername);
+        formData.append("audio", audioBlob, "voice.wav");
 
         try {
           const res = await fetch("http://localhost:5000/api/auth/voice-auth", {
@@ -82,7 +86,7 @@ export default function VoiceInput({ onSuccess }) {
             setStatus("error");
             setTimeout(() => setStatus("ready"), 2000);
           }
-        } catch (error) {
+        } catch {
           setStatus("error");
           setTimeout(() => setStatus("ready"), 2000);
         }
@@ -91,16 +95,16 @@ export default function VoiceInput({ onSuccess }) {
       recorder.start();
       setRecording(true);
       setMediaRecorder(recorder);
+      recordStartTime.current = Date.now();
       setStatus("recording");
 
       setTimeout(() => {
         if (recorder.state !== "inactive") {
           recorder.stop();
-          stream.getTracks().forEach(track => track.stop());
           setRecording(false);
         }
-      }, 5000);
-    } catch (err) {
+      }, 9000);
+    } catch {
       setStatus("mic-error");
       setTimeout(() => setStatus("ready"), 2000);
     }
@@ -108,15 +112,9 @@ export default function VoiceInput({ onSuccess }) {
 
   useEffect(() => {
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (microphoneRef.current) {
-        microphoneRef.current.getTracks().forEach(track => track.stop());
-      }
+      cancelAnimationFrame(animationRef.current);
+      audioContextRef.current?.close();
+      microphoneRef.current?.getTracks().forEach(track => track.stop());
     };
   }, []);
 
@@ -125,6 +123,7 @@ export default function VoiceInput({ onSuccess }) {
       case "username-required": return "Please enter your username";
       case "initializing": return "Initializing microphone...";
       case "recording": return "Speak now - Listening...";
+      case "too-short": return "Voice too short. Speak at least 3 seconds.";
       case "processing": return "Verifying your voice...";
       case "success": return "Authentication successful!";
       case "error": return "Verification failed. Try again.";
@@ -144,44 +143,29 @@ export default function VoiceInput({ onSuccess }) {
           placeholder="Enter your username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          disabled={status === "processing" || status === "recording"}
+          disabled={status !== "ready"}
         />
       </div>
-      
+
       <div className="voice-visualizer">
-        <div 
-          className="voice-level" 
-          style={{ width: `${audioLevel}%`, opacity: recording ? 1 : 0.5 }}
-        />
+        <div className="voice-level" style={{ width: `${audioLevel}%`, opacity: recording ? 1 : 0.5 }} />
       </div>
-      
-      <div className="status-message">
-        {getStatusMessage()}
-      </div>
-      
+
+      <div className="status-message">{getStatusMessage()}</div>
+
       <button
         onClick={startRecording}
-        disabled={status === "processing" || status === "recording" || status === "initializing"}
-        className={`auth-button ${status === "recording" ? "recording" : ""} ${status === "processing" ? "processing" : ""}`}
+        disabled={status !== "ready"}
+        className={`auth-button ${status}`}
       >
-        {status === "recording" ? (
-          <>
-            <span className="recording-indicator"></span>
-            Recording...
-          </>
-        ) : status === "processing" ? (
-          <>
-            <span className="processing-indicator"></span>
-            Processing...
-          </>
-        ) : (
-          "Start Voice Authentication"
-        )}
+        {status === "recording" ? "Recording..." :
+         status === "processing" ? "Processing..." :
+         "Start Voice Authentication"}
       </button>
-      
+
       <div className="voice-tips">
         <div className="tip">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>

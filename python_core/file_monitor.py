@@ -3,7 +3,7 @@ from datetime import datetime
 
 # Ensure logs.txt is always saved in the same folder as this script
 BASE_DIR = os.path.dirname(__file__)
-LOG_FILE = os.path.join(BASE_DIR, "access_logs.txt")
+LOG_FILE = os.path.join(BASE_DIR, "alerts.log")
 CONFIDENTIAL_FILE = os.path.join(BASE_DIR, "confidential.txt")
 
 

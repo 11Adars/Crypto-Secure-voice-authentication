@@ -113,7 +113,7 @@ export default function Register() {
           stream.getTracks().forEach(track => track.stop());
           setIsRecording(false);
         }
-      }, 5000);
+      }, 9000);
 
     } catch (err) {
       console.error('Microphone access error:', err);

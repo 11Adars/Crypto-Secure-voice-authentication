@@ -17,20 +17,13 @@ export default function Dashboard() {
   const handleThreatAttempt = async (action) => {
     try {
       await axios.post('/files/monitor', { action });
-      setAlert(`🚨 Unauthorized attempt detected: ${action}`);
+      setAlert(`Unauthorized attempt detected: ${action}`);
     } catch (err) {
       setAlert('⚠️ Threat attempt detected but logging failed.');
     }
   };
 
-  const handleGetLogs = async () => {
-    try {
-      const res = await axios.get('/files/logs');
-      setLogs(res.data.summary);
-    } catch (err) {
-      setLogs('⚠️ No logs found.');
-    }
-  };
+  const handleGetLogs = async () => { try { const res = await axios.get("/files/logs"); console.log("Logs from backend:", res.data.summary); setLogs(res.data.summary); } catch (err) { console.error("Log fetch failed:", err); setLogs("⚠️ No logs found."); } };
 
   return (
     <div className="dashboard-container">
@@ -69,7 +62,7 @@ export default function Dashboard() {
           📜 Show Log Summary
         </button>
 
-        {logs && <div className="logs-box"><pre>{logs}</pre></div>}
+        {logs && <div className="logs-box"><h3>📄 Access Log Summary</h3>  <pre style={{ whiteSpace: "pre-wrap", backgroundColor: "#f4f4f4", padding: "1em", borderRadius: "8px" }}> {logs} </pre></div>}
       </div>
     </div>
   );

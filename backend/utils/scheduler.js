@@ -2,7 +2,7 @@
 const schedule = require("node-schedule");
 
 const reauthenticateUser = (callback) => {
-    schedule.scheduleJob("*/5 * * * *", () => {
+    schedule.scheduleJob("*/1 * * * *", () => {
         console.log("🔁 Reauthenticating user every 5 minutes...");
         callback();
     });

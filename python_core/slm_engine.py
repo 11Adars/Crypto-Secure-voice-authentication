@@ -1,46 +1,88 @@
-import os
+# import os
+# import re
+# import sys
+# import io
+# from datetime import datetime
+# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+# def convert_logs_to_summary(log_file=os.path.join(os.path.dirname(__file__), "../backend/logs/alerts.log")):
+   
+#     try:
+#         with open(log_file, "r", encoding="utf-8") as f:
+#             lines = f.readlines()
+#     except FileNotFoundError:
+#         print("Log file not found.")
+#         return "No logs found to summarize."
 
-def convert_logs_to_summary(log_file=os.path.join(os.path.dirname(__file__), "access_logs.txt")):
-    """
-    Reads the access log file and summarizes how many times each file was accessed.
-    """
+#     log_pattern = re.compile(r'(?P<timestamp>\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s*-\s*(?P<action>.+)')
+#     entries = []
+
+#     for line in lines:
+#         match = log_pattern.match(line.strip())
+#         if match:
+#             ts = match.group("timestamp")
+#             action = match.group("action")
+#             entries.append(f"{ts} - {action}")
+
+#     if not entries:
+#         return "No valid access entries found."
+
+#     summary = "Access Log Summary\n\n"
+#     summary += "\n".join(entries)
+#     return summary.strip()
+
+# if __name__ == "__main__":
+#     result = convert_logs_to_summary()
+#     print(result)
+
+
+import os
+import re
+import sys
+import io
+from datetime import datetime
+
+# Fix Unicode output for emojis, etc.
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+def convert_logs_to_summary(log_file=os.path.join(os.path.dirname(__file__), "../backend/logs/alerts.log")):
     try:
-        with open(log_file, "r") as f:
+        with open(log_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except FileNotFoundError:
-        return "⚠️ No logs found to summarize."
+        print("Log file not found.")
+        return "No logs found to summarize."
 
-    summary = "📄 System Log Summary 📄\n"
-    file_access_count = {}
+    # Updated pattern: Timestamp - Action - File
+    log_pattern = re.compile(
+        r'(?P<timestamp>\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s*-\s*(?P<action>.+?)\s*-\s*(?P<file>.+)'
+    )
+
+    entries = []
 
     for line in lines:
-        try:
-            _, action, path = line.strip().split(" - ")
-            file_access_count[path] = file_access_count.get(path, 0) + 1
-        except ValueError:
-            continue  # Skip malformed lines
+        match = log_pattern.match(line.strip())
+        if match:
+            ts = match.group("timestamp")
+            action = match.group("action").strip()
+            file = match.group("file").strip()
 
-    for file, count in file_access_count.items():
-        summary += f"- {file} accessed {count} times\n"
+            # Convert timestamp to readable format
+            try:
+                ts_dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                time_str = ts_dt.strftime("%I:%M %p on %B %d")
+            except:
+                time_str = ts  # fallback if parsing fails
 
-    return summary
+            summary_line = f"At {time_str}, a '{action}' was detected on {file}."
+            entries.append(summary_line)
 
+    if not entries:
+        return "No valid access entries found."
 
-def generate_alert_summary(threat_details):
-    """
-    Generates a human-readable threat alert summary from the given details.
-    """
-    summary = f"""
-🚨 SLM Threat Alert Summary 🚨
-=====================================
-Threat Details: {threat_details}
-Recommended Action: Review user activity immediately.
-=====================================
-"""
-    return summary
+    summary = "Access Log Summary\n\n"
+    summary += "\n".join(entries)
+    return summary.strip()
 
-
-# ✅ Ensure this block runs when called via Node.js
 if __name__ == "__main__":
     result = convert_logs_to_summary()
     print(result)
